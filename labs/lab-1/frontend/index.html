@@ -7,8 +7,10 @@
     <p>Сообщение от сервера: <span id="message"></span></p>
   </body>
   <script>
-    fetch("localhost:8000").then((res) => {
-      document.querySelector("#message").textContent = res.text;
-    });
+    fetch("http://127.0.0.1:8000")
+        .then(res => res.text())
+        .then(res => {
+            document.querySelector("#message").textContent = res;
+        });
   </script>
 </html>
