@@ -1,0 +1,14 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Frontend</title>
+  </head>
+  <body>
+    <p>Сообщение от сервера: <span id="message"></span></p>
+  </body>
+  <script>
+    fetch("localhost:8000").then((res) => {
+      document.querySelector("#message").textContent = res.text;
+    });
+  </script>
+</html>
