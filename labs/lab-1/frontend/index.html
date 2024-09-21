@@ -7,7 +7,7 @@
     <p>Сообщение от сервера: <span id="message"></span></p>
   </body>
   <script>
-    fetch("http://api.itmo-clouds-labs.ru")
+    fetch("https://api.itmo-clouds-labs.ru")
         .then(res => res.text())
         .then(res => {
             document.querySelector("#message").textContent = res;
