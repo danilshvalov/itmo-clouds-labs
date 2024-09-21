@@ -51,6 +51,11 @@ server {}
 
 В данном конфиге определяется два виртуальных хоста: `itmo-clouds-labs.ru` и `api.itmo-clouds-labs.ru` для обслуживания фронтенда и бэкенда соответственно. Для этих виртуальных хостов используются сертификаты для работы HTTPS, а также включено принудительное перенаправление с HTTP на HTTPS.
 
+```bash
+ln -s ~/itmo-clouds-labs/labs/lab-1/nginx/api.itmo-clouds-labs.ru /etc/nginx/sites-available/
+ln -s ~/itmo-clouds-labs/labs/lab-1/nginx/itmo-clouds-labs.ru /etc/nginx/sites-available/
+```
+
 ## Заключение
 
 В данной лабораторной работе был настроен Nginx для обслуживания фронтенда и бэкенда по протоколу HTTPS. Для реализации фронтенда и бэкенда использовались скрипты на Python, а для получения сертификатов использовался certbot.
