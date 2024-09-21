@@ -3,7 +3,7 @@ import random
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 
-class S(BaseHTTPRequestHandler):
+class Server(BaseHTTPRequestHandler):
     def _set_headers(self):
         self.send_response(200)
         self.send_header('Content-type', 'text/html; charset=utf-8')
@@ -21,7 +21,7 @@ class S(BaseHTTPRequestHandler):
         self._set_headers()
 
 
-def run(server_class=HTTPServer, handler_class=S, addr='localhost', port=3000):
+def run(server_class=HTTPServer, handler_class=Server, addr='localhost', port=3000):
     server_address = (addr, port)
     httpd = server_class(server_address, handler_class)
 
