@@ -5,3 +5,5 @@ WORKDIR /home/appuser
 USER appuser
 
 COPY ./ /home/appuser
+
+CMD ["python3", "server.py"]

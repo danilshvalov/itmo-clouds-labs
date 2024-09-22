@@ -1,14 +1,44 @@
 services:
-    backend:
-        build: backend/
-        command: python3 server.py
+    backend-postgres:
+        image: postgres:16.4
+        environment:
+            POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+            PGDATA: /var/lib/postgresql/data/pgdata
+        volumes:
+          - pg-data:/var/lib/postgresql/data
+        networks:
+          - backend-postgres
         ports:
-          - 8000:8000
+          - 5432
+        secrets:
+          - postgres_password
 
-    frontend:
-        build: frontend/
-        command: python3 server.py
-        ports:
-          - 3000:3000
+    backend-service:
+        build: backend/
         depends_on:
-          - backend
+          - backend-postgres
+        networks:
+          - web
+          - backend-postgres
+        ports:
+          - 127.0.0.1:8000:8000
+
+    frontend-service:
+        build: frontend/
+        depends_on:
+          - backend-service
+        networks:
+          - web
+        ports:
+          - 127.0.0.1:3000:3000
+
+networks:
+    web:
+    backend-postgres:
+
+volumes:
+    pg-data:
+
+secrets:
+   postgres_password:
+     file: postgres_password.txt
