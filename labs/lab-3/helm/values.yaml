@@ -1,0 +1,28 @@
+backend:
+  deployment:
+    name: backend
+    replicas: 1
+  service:
+    name: backend-service
+    port: 8000
+  image:
+    name: backend
+    tag: "1.0"
+    pullPolicy: Never
+
+frontend:
+  deployment:
+    name: frontend
+    replicas: 1
+  service:
+    name: frontend-service
+    port: 3000
+  image:
+    name: frontend
+    tag: "1.0"
+    pullPolicy: Never
+
+ingress:
+  name: ingress
+  className: nginx
+  host: localhost
