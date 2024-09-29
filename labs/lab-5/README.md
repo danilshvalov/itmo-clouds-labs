@@ -114,3 +114,109 @@ kubectl --namespace monitoring port-forward $POD_NAME 3000
 В данной лабораторной работе был сделан мониторинг PostgreSQL на основе Grafana и Prometheus, поднятого в Kubernetes.
 
 ## Задание со звездочкой
+
+### Введение
+
+В данной лабораторной работе необходимо настроить алерт в виде IaaC, показать пример его срабатывания. Попробовать сделать так, чтобы он приходил, например, на почту или в Telegram.
+
+В качестве приложения, для которого будут создаваться алерты, использовался PostgreSQL из прошлой части лабораторной работы. Данная лабораторная работа является логическим продолжением предыдущей.
+
+### Создание Telegram-бота
+
+В качестве канала связи, по которому будет приходить алерт, был выбран Telegram. Для этого с помощью Telegram-бота `BotFather` был создан бот `itmo_alert_manager_bot`:
+
+![](alerting/images/bot-father.png)
+
+После создания `BotFather` вернул секретный токен бота, с помощью которого будут отправляться уведомления. Также этот токен был использован для получения Chat ID, который понадобится позднее при настройке Alertmanager. Для этого было необходимо перейти по ссылке `https://api.telegram.org/bot<token>/getUpdates` и получить Chat ID:
+
+![](alerting/images/chat-id.png)
+
+### Настройка Prometheus и Alertmanager
+
+Для настройки Prometheus и Alertmanager использовался следующий конфиг:
+
+```yaml
+alertmanager:
+  config:
+    global:
+      resolve_timeout: 5m
+      telegram_api_url: "https://api.telegram.org"
+
+    route:
+      receiver: telegram-bot
+
+    receivers:
+      - name: telegram-bot
+        telegram_configs:
+          - chat_id: 426994883
+            bot_token: <token>
+            api_url: "https://api.telegram.org"
+            send_resolved: true
+            parse_mode: Markdown
+            message: |-
+              {{ range .Alerts }}
+                *Alert:* {{ .Annotations.summary }}
+                *Details:*
+                {{ range .Labels.SortedPairs }} • *{{ .Name }}:* `{{ .Value }}`
+                {{ end }}
+              {{ end }}
+
+serverFiles:
+  alerting_rules.yml:
+    groups:
+      - name: postgresql
+        rules:
+          - alert: Storage overflow
+            expr: pg_database_size_bytes > 7 * 1024 * 1024
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "High storage usage on table {{ $labels.datname }}"
+```
+
+В разделе `alertmanager` определяются настройки для Alertmanager. В них прописана конфигурация Telegram-бота (токен, Chat ID и т. п.), а также шаблон сообщений, который будет использоваться в алертах.
+
+В разделе `serverFiles.alerting_rules.yml` задаются правила алертов. В качестве примера был сделан алерт, который загорается, когда в какой-нибудь базе данных PostgreSQL размер таблицы превышает 7 Мбайт.
+
+Данный конфиг был применен с помощью следующей команды:
+
+```bash
+helm upgrade -f prometheus/values.yaml my-prometheus prometheus-community/prometheus
+```
+
+После этого была выполнена следующая команда для получения информации о `my-prometheus`:
+
+```bash
+helm status my-prometheus
+```
+
+После выполнения этой команды на экран были выведены инструкции для получения имени подов, а также для проброса портов:
+
+```bash
+# Prometheus
+export POD_NAME=$(kubectl get pods --namespace monitoring -l "app.kubernetes.io/name=prometheus,app.kubernetes.io/instance=my-prometheus" -o jsonpath="{.items[0].metadata.name}")
+kubectl --namespace monitoring port-forward $POD_NAME 9090
+
+# Alertmanager
+export POD_NAME=$(kubectl get pods --namespace monitoring -l "app.kubernetes.io/name=alertmanager,app.kubernetes.io/instance=my-prometheus" -o jsonpath="{.items[0].metadata.name}")
+kubectl --namespace monitoring port-forward $POD_NAME 9093
+```
+
+Эти команды были выполнены в различных окнах терминала. Затем был открыт сайт Prometheus по ссылке `http://localhost:9090`. На нем был выбран раздел «Alerts»:
+
+![](alerting/images/prometheus.png)
+
+Как видно на рисунке, добавленные ранее алерты стали активны и «загорелись». Это произошло потому, что на момент включения алертов все таблицы в PostgreSQL превышали заданный порог в 7 Мбайт.
+
+Далее был открыт сайт Alertmanager по ссылке `http://localhost:9093`. В интерфейсе также было видно три алерта, которые соответствовали существующим таблицам в PostgreSQL:
+
+![](alerting/images/alert-manager.png)
+
+Через некоторое время Telegram-бот прислал три алерта. Содержимое одного из них представлено ниже:
+
+![](alerting/images/alert-example.png)
+
+### Заключение
+
+В данной лабораторной работе был настроен алерт в виде IaaC, показан пример его срабатывания. Алерт был сделан так, чтобы он приходил в Telegram.
