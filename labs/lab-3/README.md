@@ -168,6 +168,220 @@ spec:
 
 ![](kubernetes/images/example-6.png)
 
-## Задание под звездойчкой
+## Задание под звездочкой
+
+### Введение
+
+В данной части лабораторной работы необходимо было создать helm-chart на основе 3 обычной лабораторной работы и задеплоить все в кластер. Далее согласно заданию нужно изменить что-то в сервисе и применить эти изменения с помощью `helm upgrade`. Также расписать 3 преимущества использования helm перед классическим деплоем с помощью манифестов k8s.
+
+### Установка и запуск helm
+
+Сначала необходимо было установить и запустить helm. Был создан базовый chart с помощью команды `helm create <chart-name>`, в нашем случае названием chart послужит itmo-app.
+
+![](helm/images/example-1.png)
+
+В файле Chart.yaml были удалены комментарии, теперь он выглядит таким образом:
+
+```yaml
+apiVersion: v2
+name: itmo-app
+description: A Helm chart for itmo-app
+type: application
+version: 0.1.0
+appVersion: "1.16.0"
+```
+
+### Файл свойств values.yaml
+
+Сначала был описан файл свойств values.yaml, в котором определены будут основные настройки, которые пользователь может при желании переопределить. К таким настройкам будут относиться название Deployment и Service и у backend и у frontend, количество реплик подов, порт сервиса для подключения  подам, образ с версией, политика получения Docker-образов. Для Ingress можно название, calssName и хост.
+
+```yaml
+backend:
+  deployment:
+    name: backend
+    replicas: 1
+  service:
+    name: backend-service
+    port: 8000
+  image:
+    name: backend
+    tag: "1.0"
+    pullPolicy: Never
+
+frontend:
+  deployment:
+    name: frontend
+    replicas: 1
+  service:
+    name: frontend-service
+    port: 3000
+  image:
+    name: frontend
+    tag: "1.0"
+    pullPolicy: Never
+
+ingress:
+  name: ingress
+  className: nginx
+  host: localhost
+```
+
+### Использование шаблонов, \_helpers.tpl
+
+Файл \_helpers.tpl содержит вспомогательные функции и метки, которые используются в шаблонах. В нашем случае данный файл будет выглядеть вот так:
+
+```yaml
+{{- define "itmo-app.selectorLabels" -}}
+app.kubernetes.io/name: {{ .Chart.Name }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end -}}
+
+{{- define "itmo-app.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{- define "itmo-app.labels" -}}
+helm.sh/chart: {{ include "itmo-app.chart" . }}
+{{ include "itmo-app.selectorLabels" . }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end -}}
+```
+
+Далее для удобства создания chart'а был переработан общий YAML-файл и разделен на frontend.yaml и backend.yaml, в которых содержатся Deployment и Service, и ingress.yaml. Ниже представлен frontend.yaml, однако, как можно заметить, в нем вместо некоторых значений указаны шаблоны, в которые будут подставлены данные из файла values.yaml и шаблоны из \_helpers.tpl.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.backend.deployment.name }}
+  labels:
+    app: backend
+    {{- include "itmo-app.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.backend.deployment.replicas }}
+  selector:
+    matchLabels:
+      app: backend
+      {{- include "itmo-app.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: backend
+        {{- include "itmo-app.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: backend
+        image: "{{ .Values.backend.image.name }}:{{ .Values.backend.image.tag }}"
+        imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+        ports:
+        - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.backend.service.name }}
+spec:
+  selector:
+    app: backend
+    {{- include "itmo-app.selectorLabels" . | nindent 4 }}
+  ports:
+  - port: {{ .Values.backend.service.port }}
+  targetPort: 8000
+```
+
+Ниже представлено содержание файла backend.yaml. Принцип работы шаблонов и подставновки такой же, как и в frontend.yaml.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.backend.deployment.name }}
+  labels:
+    app: backend
+    {{- include "itmo-app.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.backend.deployment.replicas }}
+  selector:
+    matchLabels:
+      app: backend
+      {{- include "itmo-app.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: backend
+        {{- include "itmo-app.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: backend
+        image: "{{ .Values.backend.image.name }}:{{ .Values.backend.image.tag }}"
+        imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+        ports:
+        - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.backend.service.name }}
+spec:
+  selector:
+    app: backend
+    {{- include "itmo-app.selectorLabels" . | nindent 4 }}
+  ports:
+  - port: {{ .Values.backend.service.port }}
+ 
+```
+
+Далее представлен файл ingress.yaml.
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.ingress.name }}
+  labels:
+    {{- include "itmo-app.labels" . | nindent 4 }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+  - host: {{ .Values.ingress.host }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service: 
+            name: {{ .Values.frontend.service.name }}
+            port: 
+              number: {{ .Values.frontend.service.port }}
+      - path: /api
+        pathType: Prefix
+        backend:
+          service: 
+            name: {{ .Values.backend.service.name }}
+            port: 
+              number: {{ .Values.backend.service.port }}
+```
+
+Развертывание приложения было осуществлено с помощью команды вида `helm install <name> <chart-folder>`, также был открыт тоннель миникуб. Результат представлен на рисунке ниже.
+
+![](helm/images/example-2.png)
+
+Для проверки корректной работы приложения был открыт браузер по адресу localhost. Запросы браузера успешно достигают backend, поэтому надпись появляется, что видно на рисунке ниже.
+
+![](helm/images/example-3.png)
+
+Для того чтобы протестировать работу `helm upgrade` был обновлен Docker-образ backend и указана версия 1.1 вместо 1.0, что также было зафиксировано в values.yaml, были добавлены фразы-варианты для запросов от браузера. Далее была использована команда `helm upgrade itmo-helm ../itmo-app`, а также был открыть тоннель миникуба, что видно на рисунке ниже.
+
+![](helm/images/example-4.png)
+
+### Причины, по которым удобнее использовать Helm, чем классический деплой через Kubernetes манифесты
+
+1. С помощью Helm можно развертывать упакованные приложения как набор предварительно настроенных ресурсов Kubernetes с установленными версиями лишь парой команд.
+2. С помощью Helm можно вынести значимые параметры кластера в один файл values.yaml, изменения в котором отразятся на всем проекте без необходимости искать и исправлять все зависимости по разным манифестам.
+3. Helm дает возможность проверять все ресурсы до развертывания, чтобы убедиться что значения установлены, а функции шаблонов работают должным образом (с помощью команды `helm install --dry-run --debug`). 
+4. Helm дает возможность управлять развертыванием, в том числе обновлять, откатывать в случае возникновения проблем всего одной командой.
+5. Простота поиска информации благодаря опыту сообщества при работе с Helm.
+
 
 

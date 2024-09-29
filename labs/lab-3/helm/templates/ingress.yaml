@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.ingress.name }}
+  labels:
+    {{- include "itmo-app.labels" . | nindent 4 }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  rules:
+  - host: {{ .Values.ingress.host }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service: 
+            name: {{ .Values.frontend.service.name }}
+            port: 
+              number: {{ .Values.frontend.service.port }}
+      - path: /api
+        pathType: Prefix
+        backend:
+          service: 
+            name: {{ .Values.backend.service.name }}
+            port: 
+              number: {{ .Values.backend.service.port }}
