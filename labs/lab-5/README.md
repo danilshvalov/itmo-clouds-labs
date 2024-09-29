@@ -4,7 +4,7 @@
 
 ### Введение
 
-В данной лабораторной работе необходимо сделать мониторинг сервиса, поднятого в Kubernetes и показать хотя бы два рабочих графика, которые будут отражать состояние системы.
+В данной лабораторной работе необходимо сделать мониторинг сервиса, поднятого в Kubernetes, и показать хотя бы два рабочих графика, которые будут отражать состояние системы.
 
 ### Подготовка Kubernetes
 
@@ -43,9 +43,9 @@ metrics:
 helm upgrade -f postgresql/values.yaml my-postgresql oci://registry-1.docker.io/bitnamicharts/postgresql
 ```
 
-#### Установка Prometeus
+#### Установка Prometheus
 
-Для установки Prometeus был добавлен репозиторий `prometheus-community`. Затем был установлен пакет `prometheus` из добавленного репозитория:
+Для установки Prometheus был добавлен репозиторий `prometheus-community`. Затем был установлен пакет `prometheus` из добавленного репозитория:
 
 ```bash
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
