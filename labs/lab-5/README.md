@@ -125,11 +125,11 @@ kubectl --namespace monitoring port-forward $POD_NAME 3000
 
 В качестве канала связи, по которому будет приходить алерт, был выбран Telegram. Для этого с помощью Telegram-бота `BotFather` был создан бот `itmo_alert_manager_bot`:
 
-![](alerting/images/bot-father.png =800x)
+<img src="alerting/images/bot-father.png" width="800"/>
 
 После создания `BotFather` вернул секретный токен бота, с помощью которого будут отправляться уведомления. Также этот токен был использован для получения Chat ID, который понадобится позднее при настройке Alertmanager. Для этого было необходимо перейти по ссылке `https://api.telegram.org/bot<token>/getUpdates` и получить Chat ID:
 
-![](alerting/images/chat-id.png =400x)
+<img src="alerting/images/chat-id.png" width="400"/>
 
 ### Настройка Prometheus и Alertmanager
 
@@ -215,7 +215,7 @@ kubectl --namespace monitoring port-forward $POD_NAME 9093
 
 Через некоторое время Telegram-бот прислал три алерта. Содержимое одного из них представлено ниже:
 
-![](alerting/images/alert-example.png =400x)
+<img src="alerting/images/alert-example.png" width="400"/>
 
 ### Заключение
 
