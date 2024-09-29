@@ -125,7 +125,7 @@ kubectl --namespace monitoring port-forward $POD_NAME 3000
 
 В качестве канала связи, по которому будет приходить алерт, был выбран Telegram. Для этого с помощью Telegram-бота `BotFather` был создан бот `itmo_alert_manager_bot`:
 
-<img src="alerting/images/bot-father.png" width="800"/>
+<img src="alerting/images/bot-father.png" width="600"/>
 
 После создания `BotFather` вернул секретный токен бота, с помощью которого будут отправляться уведомления. Также этот токен был использован для получения Chat ID, который понадобится позднее при настройке Alertmanager. Для этого было необходимо перейти по ссылке `https://api.telegram.org/bot<token>/getUpdates` и получить Chat ID:
 
@@ -215,7 +215,7 @@ kubectl --namespace monitoring port-forward $POD_NAME 9093
 
 Через некоторое время Telegram-бот прислал три алерта. Содержимое одного из них представлено ниже:
 
-<img src="alerting/images/alert-example.png" width="400"/>
+<img src="alerting/images/alert-example.png" width="500"/>
 
 ### Заключение
 
