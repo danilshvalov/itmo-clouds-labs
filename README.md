@@ -10,7 +10,7 @@
 
 ## Авторы
 
-- Швалов Даниил K34211
-- Кротова Милена K34201
-- Харьковской Роман K34211
-- Клочкова Елизавета K34201
+- [@danilshvalov](https://github.com/danilshvalov) — Швалов Даниил K34211
+- [@kromilka](https://github.com/kromilka) — Кротова Милена K34201
+- [@RomanKharkovskoy](https://github.com/RomanKharkovskoy) — Харьковской Роман K34211
+- [@klochkova24](https://github.com/klochkova24) — Клочкова Елизавета K34201
