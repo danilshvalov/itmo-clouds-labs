@@ -2,13 +2,19 @@ name: CI/CD for Lab-4
 
 on:
   push:
-    paths:
-      - 'lab-4/**'
+    branches: 
+      - main
   pull_request:
-    paths:
-      - 'lab-4/**'
+    branches:
+      - main
 
 jobs:
+  print_hello:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Print hello
+        run: echo "Hello world!"
   build:
     runs-on: ubuntu-latest
 
