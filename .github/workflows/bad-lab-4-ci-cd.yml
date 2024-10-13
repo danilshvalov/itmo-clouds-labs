@@ -1,0 +1,37 @@
+name: CI/CD with Bad Practices
+
+on:
+  push:
+    branches:
+      - '*'  # Triggers on any branch, which can lead to untested code being deployed
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install all dependencies
+        run: |
+          cd lab-4
+          pip install -r requirements.txt  # Installing all dependencies blindly without checking for updates or vulnerabilities
+
+      - name: Run all tests
+        run: |
+          cd lab-4
+          python -m unittest discover  # Not specifying test directory can lead to unintended tests being run
+
+      - name: Build and deploy to production
+        run: |
+          echo "Deploying to production..."  # No validation or safety checks before deployment
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Notify failure
+        run: |
+          if [ "${{ job.status }}" == "failure" ]; then  # This condition might not be reached if the previous job passes
+            echo "Build failed! Notifying team..."  # Notifications should be done through actual channels, not just echoing
