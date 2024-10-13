@@ -38,9 +38,8 @@ jobs:
           python -m unittest discover -s tests -p "*.py"
 
       - name: Build and deploy to production
-        run: |
-          echo "Running pre-deployment checks..."
-          echo "Deploying to production..."  # Replace with actual deployment command
+        if: success()
+        run: echo "Deploying to production..."
 
   notify:
     runs-on: ubuntu-latest
