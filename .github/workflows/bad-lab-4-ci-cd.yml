@@ -15,12 +15,12 @@ jobs:
 
       - name: Install all dependencies
         run: |
-          cd lab-4
+          cd labs/lab-4
           pip install -r requirements.txt  # Installing all dependencies blindly without checking for updates or vulnerabilities
 
       - name: Run all tests
         run: |
-          cd lab-4
+          cd labs/lab-4
           python -m unittest discover  # Not specifying test directory can lead to unintended tests being run
 
       - name: Build and deploy to production
