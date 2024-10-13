@@ -33,5 +33,13 @@ jobs:
     steps:
       - name: Notify failure
         run: |
-          if [ "${{ job.status }}" == "failure" ]; then  # This condition might not be reached if the previous job passes
-            echo "Build failed! Notifying team..."  # Notifications should be done through actual channels, not just echoing
+          if [ "${{ job.status }}" == "failure" ]; then 
+            echo "Build failed! Notifying team..." 
+          fi
+      - name: Notify success
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then 
+            echo "Build succeeded! Notifying team..." 
+          fi
+
+          
