@@ -28,11 +28,13 @@ jobs:
 
       - name: Install dependencies
         run: |
+          cd lab-4
           pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Run tests
         run: |
+          cd lab-4
           python -m unittest discover -s tests -p "*.py"
 
       - name: Build and deploy to production
