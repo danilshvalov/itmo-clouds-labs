@@ -3,7 +3,7 @@ name: CI/CD with Bad Practices
 on:
   push:
     branches:
-      - '*'  # Triggers on any branch, which can lead to untested code being deployed
+      - '*'
 
 jobs:
   build:
@@ -16,16 +16,16 @@ jobs:
       - name: Install all dependencies
         run: |
           cd labs/lab-4
-          pip install -r requirements.txt  # Installing all dependencies blindly without checking for updates or vulnerabilities
+          pip install -r requirements.txt
 
       - name: Run all tests
         run: |
           cd labs/lab-4
-          python -m unittest discover  # Not specifying test directory can lead to unintended tests being run
+          python -m unittest discover
 
       - name: Build and deploy to production
         run: |
-          echo "Deploying to production..."  # No validation or safety checks before deployment
+          echo "Deploying to production..."
 
   notify:
     runs-on: ubuntu-latest
@@ -35,11 +35,6 @@ jobs:
         run: |
           if [ "${{ job.status }}" == "failure" ]; then 
             echo "Build failed! Notifying team..." 
-          fi
-      - name: Notify success
-        run: |
-          if [ "${{ job.status }}" == "success" ]; then 
-            echo "Build succeeded! Notifying team..." 
           fi
 
           
