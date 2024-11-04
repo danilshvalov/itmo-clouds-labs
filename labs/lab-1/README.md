@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/0f615f0f-8b88-4bca-9df2-b5198b24b550)# Лабораторная работа №1
+# Лабораторная работа №1
 
 ## Обязательное задание
 
