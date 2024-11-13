@@ -4,7 +4,7 @@
 
 ### Введение
 
-В данной лабораторной работе в качестве CI/CD инструмента используется GitHub Actions, для которого были написаны 2 `.yml` файла `CI/CD with Best Practices` и `CI/CD with Bad Practices`.
+В данной лабораторной работе в качестве CI/CD инструмента используется GitHub Actions, для которого были написаны 2 `.yml` файла [`CI/CD with Best Practices`](https://github.com/danilshvalov/itmo-clouds-labs/actions/runs/11315345750/workflow?pr=7) и [`CI/CD with Bad Practices`](https://github.com/danilshvalov/itmo-clouds-labs/actions/runs/11315345747/workflow?pr=7).
 
 ### Bad Practices
 
@@ -12,7 +12,7 @@
 
 CI/CD пайплайн настроен, чтобы взаимодействовать с проектом находящим в lab-4. Однако без спецификации ветки и директории workflow будет запускаться при взаимодействии с любой веткой и директорией в репозитории `itmo-clouds-labs`.
 
-```
+```yaml
 on:
     push:
         branches:
@@ -27,7 +27,7 @@ on:
 
 Мы хотим, чтобы использовалась конкретная директория tests, в которой находятся тесты, однако данный степ будет искать тесты по всей директории с кодом, а не в конкретной указанной разработчиком.
 
-```
+```yaml
 - name: Run all tests
     run: |
         cd labs/lab-4
@@ -39,7 +39,7 @@ on:
 Необходимо добавлять шаги для проверки. Например, использовать `if: success()` для проверки статуса тестов. \\
 (В данном случае в качестве деплоя стоит заглушка в виде вывода `Deploying to production...`, поэтому ничего плохого не произойдёт, если данная строка напечатается даже при сценарии, когда тесты не выполняются. В реальном проекте это может быть фатальной ошибкой)
 
-```
+```yaml
 - name: Build and deploy to production
     run: |
         echo "Deploying to production..."
@@ -49,7 +49,7 @@ on:
 
 Все шаги должны зависеть от успешного завершения сборки, чтобы избежать ненужных уведомлений. Однако в данном случае job с уведомлением запустится в любом случае (в не зависимости от результата выполнения сборки).
 
-```
+```yaml
 notify:
     runs-on: ubuntu-latest
     needs: build
@@ -67,7 +67,7 @@ notify:
 
 Пайплайн затрагивает только директории labs/lab-4 и .github/workflows, а также только ветку lab-4.
 
-```
+```yaml
 on:
   push:
     branches:
@@ -89,7 +89,7 @@ on:
 
 Чтобы зафиксировать поведение кода была выбрана версия Python 3.10.
 
-```
+```yaml
 - name: Set up Python
     uses: actions/setup-python@v2
     with:
@@ -102,7 +102,7 @@ on:
 
 Теперь при запуске workflow запускаются только тесты из директории tests во избежание поиска тестов в других файлах и директориях.
 
-```
+```yaml
 - name: Run tests
     run: |
         cd labs/lab-4
@@ -115,7 +115,7 @@ on:
 
 Перед деплоем требуется как минимум выполнение всех указанных тестов, поэтому перед этим шагом необходимо устанавливать проверку на выполнение тестов.
 
-```
+```yaml
 - name: Build and deploy to production
     if: success()
     run: echo "Deploying to production..."
@@ -127,7 +127,7 @@ on:
 
 Теперь уведомления будут запускаться только при условии, что во время выполнения workflow не возникло ошибок
 
-```
+```yaml
 notify:
     runs-on: ubuntu-latest
     needs: build
@@ -139,3 +139,76 @@ notify:
 ```
 
 Результат: Это позволяет команде сосредоточиться на реальных проблемах, минимизируя шум от лишних уведомлений и улучшая реакцию на сбои в процессе разработки.
+
+## Дополнительное задание
+
+### Введение 
+
+В данной лабораторной работе была првоедена работа с секретами для CI/CD
+
+### Создание секретов
+
+В качестве утилиты для создания и использования секретов был использован Vault
+![image](https://github.com/user-attachments/assets/b88d6f65-9d13-4e26-bd0e-70476575aa67)
+
+Данная утилита была настроена на локальном хосте по адресу 127.0.0.1:8201
+![image](https://github.com/user-attachments/assets/8c2a87cf-5891-49c5-8316-6784b35133ac)
+
+### Связь с GitHub
+
+Чтобы наш CI/CD узнал про секреты, которые локально храняться на моей машине, github должен знать белый IP-адрес, на который можно отправлять GET запросы на получением секретов./
+Чтобы получить белый IP-адрес было использовано тунелирование с помощью [VK Tunnel](https://dev.vk.com/ru/libraries/tunnel) (как альтернатива ngrok).
+
+![image](https://github.com/user-attachments/assets/9eb80bdf-b420-4c6d-9b32-7c212a3346ff)
+
+Перейдя по данному адресу, был добавлен тестовый секрет foo="hello" по адресу secret/hello
+
+![image](https://github.com/user-attachments/assets/ff3f72e4-6d8c-4de8-918a-02e098ca1de4)
+
+### CI/CD
+
+Для данного задания был написан простенький CI/CD файл для тестирования секретов.
+
+```
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install Vault CLI
+        run: |
+          sudo snap install vault
+      - name: Retrieve secrets from Vault
+        run: |
+          export VAULT_ADDR="https://user181687390-tqqghisk.tunnel.vk-apps.com/"
+          export VAULT_TOKEN=${{ secrets.VAULT_TOKEN }}
+          export SECRET=$(vault kv get -field=foo secret/hello)
+          echo "Этот секрет можно было бы использовать например для подключения к БД по адресу из другого тунеля, но...."
+          echo "Hello"
+          echo $SECRET
+        
+      - name: Deploy
+        run: |
+          echo "Секреты с локалхоста доехали всё супер"
+```
+
+Пайплайн обращается к секретам, установленным в GitHub репозитории:
+* secrets.VAULT_ADDR
+* secrets.VAULT_TOKEN
+
+### Итог
+
+В итоге данный CI/CD файл подтягивает секреты с локального хоста по белому IP-адресу и может использовать их как вздумается девопсу.
+
+![image](https://github.com/user-attachments/assets/51356e0d-48b4-4b30-b433-3a0f9ce8d52e)
+
+Во вкладке Retrieve secrets from Vault можно заметить, что был выведен наш секрет (конечно не стоит выводить секреты в логи, иначе никакие это не секреты, но в данном случае секрет был выведен только для того, чтобы проверить, что он действительно подтянулся)
